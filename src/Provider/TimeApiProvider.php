@@ -4,15 +4,18 @@ namespace GeoClock\Provider;
 
 use DateTimeImmutable;
 use GeoClock\Exception\ProviderException;
+use GeoClock\IpResolver\IpResolverInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
 class TimeApiProvider implements ProviderInterface
 {
     private Client $client;
+    private IpResolverInterface $ipResolver;
 
-    public function __construct()
+    public function __construct(IpResolverInterface $ipResolver)
     {
+        $this->ipResolver = $ipResolver;
         $this->client = new Client([
             'base_uri' => 'https://timeapi.io/api/',
             'timeout' => 5.0,
@@ -20,19 +23,21 @@ class TimeApiProvider implements ProviderInterface
     }
 
     /**
-     * Fetches current DateTimeImmutable based on IP using timeapi.io API.
+     * Fetches current DateTimeImmutable using timeapi.io based on IP.
      *
-     * @param string|null $ip IP address. If null, external IP will be used.
+     * @param string|null $ip IP address. If null, it will resolve automatically.
      * @return DateTimeImmutable
      * @throws ProviderException
      */
     public function getDateTime(?string $ip = null): DateTimeImmutable
     {
         try {
-            $endpoint = $ip ? 'Time/current/ip?ipAddress=' . urlencode($ip) : 'Time/current/ip';
+            if ($ip === null) {
+                $ip = $this->ipResolver->resolve();
+            }
 
-            $response = $this->client->get($endpoint);
-            $data = json_decode((string) $response->getBody(), true);
+            $response = $this->client->get('Time/current/ip?ipAddress=' . urlencode($ip));
+            $data = json_decode((string)$response->getBody(), true);
 
             if (empty($data['dateTime']) || empty($data['timeZone'])) {
                 throw new ProviderException('Invalid response from timeapi.io API.');
