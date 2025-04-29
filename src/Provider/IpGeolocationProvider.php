@@ -4,6 +4,7 @@ namespace GeoClock\Provider;
 
 use DateTimeImmutable;
 use GeoClock\Exception\ProviderException;
+use GeoClock\Http\HandlerStackFactory;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -12,12 +13,14 @@ class IpGeolocationProvider implements ProviderInterface
     private Client $client;
     private string $apiKey;
 
-    public function __construct(string $apiKey)
+    public function __construct(string $apiKey, float $timeout = 5.0, int $maxRetries = 3)
     {
         $this->apiKey = $apiKey;
+
         $this->client = new Client([
             'base_uri' => 'https://api.ipgeolocation.io/',
-            'timeout' => 5.0,
+            'timeout' => $timeout,
+            'handler' => HandlerStackFactory::createWithRetry($maxRetries),
         ]);
     }
 

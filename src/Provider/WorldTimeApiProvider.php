@@ -4,6 +4,7 @@ namespace GeoClock\Provider;
 
 use DateTimeImmutable;
 use GeoClock\Exception\ProviderException;
+use GeoClock\Http\HandlerStackFactory;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -11,11 +12,12 @@ class WorldTimeApiProvider implements ProviderInterface
 {
     private Client $client;
 
-    public function __construct()
+    public function __construct(float $timeout = 5.0, int $maxRetries = 3)
     {
         $this->client = new Client([
             'base_uri' => 'https://worldtimeapi.org/api/',
-            'timeout' => 5.0,
+            'timeout' => $timeout,
+            'handler' => HandlerStackFactory::createWithRetry($maxRetries),
         ]);
     }
 

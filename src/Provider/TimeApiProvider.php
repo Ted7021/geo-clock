@@ -4,6 +4,7 @@ namespace GeoClock\Provider;
 
 use DateTimeImmutable;
 use GeoClock\Exception\ProviderException;
+use GeoClock\Http\HandlerStackFactory;
 use GeoClock\IpResolver\IpResolverInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -13,12 +14,14 @@ class TimeApiProvider implements ProviderInterface
     private Client $client;
     private IpResolverInterface $ipResolver;
 
-    public function __construct(IpResolverInterface $ipResolver)
+    public function __construct(IpResolverInterface $ipResolver, float $timeout = 5.0, int $maxRetries = 3)
     {
         $this->ipResolver = $ipResolver;
+
         $this->client = new Client([
             'base_uri' => 'https://timeapi.io/api/',
-            'timeout' => 5.0,
+            'timeout' => $timeout,
+            'handler' => HandlerStackFactory::createWithRetry($maxRetries),
         ]);
     }
 
@@ -36,7 +39,7 @@ class TimeApiProvider implements ProviderInterface
                 $ip = $this->ipResolver->resolve();
             }
 
-            $response = $this->client->get('Time/current/ip?ipAddress=' . urlencode($ip));
+            $response = $this->client->get('https://timeapi.io/api/Time/current/ip?ipAddress=' . urlencode($ip));
             $data = json_decode((string)$response->getBody(), true);
 
             if (empty($data['dateTime']) || empty($data['timeZone'])) {
