@@ -83,6 +83,25 @@ use GeoClock\Provider\WorldTimeApiProvider;
 $provider = new WorldTimeApiProvider(timeout: 10.0, maxRetries: 5);
 ```
 
+## Usage with API Key
+
+Some providers require an API key, for example, [ipgeolocation.io](https://ipgeolocation.io).
+
+### Example: Using IpGeolocationProvider
+
+```php
+use GeoClock\GeoClockFactory;
+use GeoClock\Provider\IpGeolocationProvider;
+
+// Create provider with your API key
+$provider = new IpGeolocationProvider('your-api-key-here');
+
+// Create clock using custom provider
+$clock = GeoClockFactory::createWithProviders([$provider]);
+
+echo $clock->now()->format('Y-m-d H:i:s');
+```
+
 ---
 
 ## Testing
